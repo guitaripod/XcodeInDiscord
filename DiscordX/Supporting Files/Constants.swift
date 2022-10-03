@@ -37,9 +37,9 @@ let xcodeWindowNames = [
     "Accessibility Inspector",
     "FileMerge",
     "Create ML",
-    "RealityComposer",
-    //doc://com.apple.documentation -> Process name -> Xcode Documentation
-    //unable to find organiser
+    "RealityComposer"
+    // doc://com.apple.documentation -> Process name -> Xcode Documentation
+    // unable to find organiser
 ]
 
 // The following constants are for use with the Discord App
@@ -74,7 +74,7 @@ let discordRPImageKeys = [
     "metal",
     "xib",
     "arobject",
-    "entitlements",
+    "entitlements"
 ]
 
 // default for unsupported file types
@@ -82,4 +82,3 @@ let discordRPImageKeyDefault = "xcode"
 
 // Xcode application icon
 let discordRPImageKeyXcode = "xcode"
-

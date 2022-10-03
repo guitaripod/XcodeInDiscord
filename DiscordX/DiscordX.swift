@@ -15,7 +15,7 @@ struct DiscordX: App {
     init() {
         UserDefaults.standard.register(defaults: ["strictMode": true, "flauntMode": false])
     }
-    
+
     var body: some Scene {
         WindowGroup {
             ContentView()

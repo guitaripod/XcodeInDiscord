@@ -22,7 +22,7 @@ func runAPScript(_ s: APScripts) -> [String]? {
         \(s.rawValue)
     end tell
     """
-    
+
     // execute the script
     let script = NSAppleScript.init(source: scr)
     let result = script?.executeAndReturnError(nil)
@@ -44,7 +44,7 @@ func runAPScript(_ s: APScripts) -> [String]? {
                 arr.append(uwStrVal)
             }
         }
-        
+
         return arr
     }
     return nil
@@ -60,17 +60,17 @@ func getActiveFilename() -> String? {
     """
     let result = NSAppleScript(source: activeApplicationVersion)?.executeAndReturnError(nil)
     let version = result?.stringValue?.split(separator: ".")
-//    print(version?[0], version?[1])
-    
+    //    print(version?[0], version?[1])
+
     guard let fileNames = runAPScript(.documentNames) else {
         return nil
     }
-    
+
     guard var windowNames = runAPScript(.windowNames) else {
         return nil
     }
-    
-    //Hotfix for Xcode 13.2.1
+
+    // Hotfix for Xcode 13.2.1
     if Int(version?[0] ?? "12") == 13 && (Int(version?[1] ?? "5") ?? 5) >= 2 {
         var correctedNames = [String]()
         for var windowName in windowNames {
@@ -82,8 +82,8 @@ func getActiveFilename() -> String? {
         }
         windowNames = correctedNames
     }
-//    print("\n\tFile Names: \(fileNames)\n\tWindow Names: \(windowNames)\n")
-    
+    //    print("\n\tFile Names: \(fileNames)\n\tWindow Names: \(windowNames)\n")
+
     // find the first window title that matches a filename
     // (the first window name is the one in focus)
     for window in windowNames {
@@ -111,9 +111,9 @@ func getActiveWindow() -> String? {
             get the name of every application process whose frontmost is true
         end tell
     """
-    
-//    get the name of every process whose visible is true
-    
+
+    //    get the name of every process whose visible is true
+
     let script = NSAppleScript.init(source: activeApplication)
     let result = script?.executeAndReturnError(nil)
 
@@ -123,7 +123,7 @@ func getActiveWindow() -> String? {
             guard let strVal = desc.atIndex(i)!.stringValue else { return "Xcode" }
             arr.append(strVal)
         }
-//        print(arr[0])
+        //        print(arr[0])
         return arr[0]
     }
     return ""

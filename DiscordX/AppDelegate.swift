@@ -10,14 +10,14 @@ import Cocoa
 import SwordRPC
 import SwiftUI
 
-class AppViewModel: ObservableObject {
-  @Published var showPopover = false
+final class AppViewModel: ObservableObject {
+    @Published var showPopover = false
 }
 
 enum RefreshConfigurable: Int {
     case strict = 0
     case flaunt
-    
+
     var message: String {
         switch self {
         case .strict:
@@ -28,8 +28,7 @@ enum RefreshConfigurable: Int {
     }
 }
 
-//@NSApplicationMain
-class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate {
 
     var window: NSWindow!
     var timer: Timer?
@@ -38,16 +37,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var inactiveDate: Date?
     var lastWindow: String?
     var notifCenter = NSWorkspace.shared.notificationCenter
-    
+
     var statusItem: NSStatusItem!
-    
+
     var isRelaunch: Bool = false
-    
+
     func beginTimer() {
-        timer = Timer(timeInterval: TimeInterval(refreshInterval), repeats: true, block: { _ in
-            self.updateStatus()
-//            print(Date())
-        })
+        timer = Timer(timeInterval: TimeInterval(refreshInterval), repeats: true) { [unowned self] _ in
+            updateStatus()
+        }
+
         RunLoop.main.add(timer!, forMode: .common)
         timer!.fire()
     }
@@ -58,74 +57,74 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func updateStatus() {
         var p = RichPresence()
-        
-        let an = getActiveWindow() // an -> Application Name
-        
-        let fn = getActiveFilename() //fn -> File Name
-        let ws = getActiveWorkspace() //ws -> Workspace
-        
-//        print("Application Name: \(an ?? "")\nFile Name: \(fn ?? "")\nWorkspace: \(ws ?? "")\n")
-        
+
+        let applicationName = getActiveWindow()
+        let fileName = getActiveFilename()
+        let workspace = getActiveWorkspace()
+
         // determine file type
-        if fn != nil && an == "Xcode" {
-            p.details = "Editing \(fn!)"
-            if let fileExt = getFileExt(fn!), discordRPImageKeys.contains(fileExt) {
+        if fileName != nil && applicationName == "Xcode" {
+            p.details = "Editing \(fileName!)"
+            if let fileExt = getFileExt(fileName!), discordRPImageKeys.contains(fileExt) {
                 p.assets.largeImage = fileExt
                 p.assets.smallImage = discordRPImageKeyXcode
             } else {
                 p.assets.largeImage = discordRPImageKeyDefault
             }
         } else {
-            if let appName = an, xcodeWindowNames.contains(appName) {
+            if let appName = applicationName, xcodeWindowNames.contains(appName) {
                 p.details = "Using \(appName)"
-                p.assets.largeImage = appName.replacingOccurrences(of: "\\s", with: "", options: .regularExpression).lowercased()
+                p.assets.largeImage = appName.replacingOccurrences(
+                    of: "\\s",
+                    with: "",
+                    options: .regularExpression
+                ).lowercased()
                 p.assets.smallImage = discordRPImageKeyXcode
             }
         }
 
         // determine workspace type
-        if ws != nil {
-            if an == "Xcode"{
-                if ws != "Untitled" {
-                    p.state = "in \(withoutFileExt(ws!))"
-                    lastWindow = ws!
+        if workspace != nil {
+            if applicationName == "Xcode"{
+                if workspace != "Untitled" {
+                    p.state = "in \(withoutFileExt(workspace!))"
+                    lastWindow = workspace!
                 }
             } else {
                 p.assets.smallImage = discordRPImageKeyXcode
                 p.assets.largeImage = discordRPImageKeyDefault
-                p.state = "Working on \(withoutFileExt((lastWindow ?? ws) ?? "?" ))"
+                p.state = "Working on \(withoutFileExt((lastWindow ?? workspace) ?? "?" ))"
             }
         }
 
         // Xcode was just launched?
-        if fn == nil && ws == nil {
+        if fileName == nil && workspace == nil {
             p.assets.largeImage = discordRPImageKeyXcode
             p.details = "No file open"
         }
-        
+
         p.timestamps.start = startDate!
         p.timestamps.end = nil
         rpc!.setPresence(p)
-//        print("updating RP")
     }
 
     func initRPC() {
         // init discord stuff
         rpc = SwordRPC.init(appId: discordClientId)
         rpc!.delegate = self
-        rpc!.connect()
+        _ = rpc!.connect()
     }
 
     func deinitRPC() {
-        self.rpc!.setPresence(RichPresence())
-        self.rpc!.disconnect()
-        self.rpc = nil
+        rpc!.setPresence(RichPresence())
+        rpc!.disconnect()
+        rpc = nil
     }
-    
+
     struct ContentView: View {
         @State var refreshConfigurable: RefreshConfigurable
         var appDelegate: AppDelegate
-        
+
         init(_ appDelegate: AppDelegate) {
             self.appDelegate = appDelegate
             if strictMode {
@@ -136,31 +135,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 fatalError("Unspecified refresh type")
             }
         }
-        
+
         var body: some View {
             VStack {
                 VStack {
                     Spacer()
                     Button("Start DiscordX") {
-                        if self.appDelegate.rpc == nil {
-                            self.appDelegate.isRelaunch = true
-                            self.appDelegate.launchApplication()
+                        if appDelegate.rpc == nil {
+                            appDelegate.isRelaunch = true
+                            appDelegate.launchApplication()
                         } else {
                             print("DiscordX is already running")
                         }
                     }
                     Spacer()
                     Button("Stop DiscordX") {
-                        if let rpc = self.appDelegate.rpc {
+                        if let rpc = appDelegate.rpc {
                             rpc.setPresence(RichPresence())
                             rpc.disconnect()
-                            self.appDelegate.rpc = nil
-                            self.appDelegate.clearTimer()
+                            appDelegate.rpc = nil
+                            appDelegate.clearTimer()
                         } else {
                             print("DiscordX is not running")
                         }
                     }
-                    
+
                     Spacer()
                     Picker(selection: $refreshConfigurable, label: Text("Select Mode :")) {
                         Text("Strict").tag(RefreshConfigurable.strict)
@@ -169,7 +168,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                             .help(RefreshConfigurable.flaunt.message)
                     }
                     .pickerStyle(RadioGroupPickerStyle())
-                    
+
                     Spacer()
                     Button("Quit DiscordX") {
                         exit(-1)
@@ -191,144 +190,159 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
     }
-    
+
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         launchApplication()
-        
+
         let contentView = ContentView(self)
         let view = NSHostingView(rootView: contentView)
         print(strictMode, flauntMode)
-        
+
         view.frame = NSRect(x: 0, y: 0, width: 200, height: 160)
-                
+
         let menuItem = NSMenuItem()
         menuItem.view = view
-                
+
         let menu = NSMenu()
         menu.addItem(menuItem)
-                
+
         // StatusItem is stored as a class property.
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem?.menu = menu
         let image = NSImage(named: "AppIcon")
-        image?.size = NSMakeSize(24.0, 24.0)
+        image?.size = NSSize(width: 24.0, height: 24.0)
         statusItem.button!.image = image
         statusItem.isVisible = true
-        
+
         if let window = NSApplication.shared.windows.first {
             window.close()
         }
-        
+
     }
-    
+
     private lazy var addAllObservers: () = {
         // run on Xcode launch
-        self.notifCenter.addObserver(forName: NSWorkspace.didLaunchApplicationNotification, object: nil, queue: nil, using: { notif in
-            if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
-                if app.bundleIdentifier == xcodeBundleId {
-//                    print("xcode launched, connecting...")
-                    self.initRPC()
+        notifCenter.addObserver(
+            forName: NSWorkspace.didLaunchApplicationNotification,
+            object: nil,
+            queue: nil,
+            using: { [unowned self] notif in
+                if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
+                    if app.bundleIdentifier == xcodeBundleId {
+                        initRPC()
+                    }
                 }
-            }
-        })
-        
+            })
+
         // run on Xcode close
-        self.notifCenter.addObserver(forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: nil, using: { notif in
-            if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
-                if app.bundleIdentifier == xcodeBundleId {
-//                    print("xcode closed, disconnecting...")
-                    self.deinitRPC()
+        notifCenter.addObserver(
+            forName: NSWorkspace.didTerminateApplicationNotification,
+            object: nil,
+            queue: nil,
+            using: { [unowned self] notif in
+                if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
+                    if app.bundleIdentifier == xcodeBundleId {
+                        deinitRPC()
+                    }
                 }
-            }
-        })
-        
+            })
+
         if strictMode {
-            self.notifCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: nil, using: { notif in
-                if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
-                    if app.bundleIdentifier == xcodeBundleId {
-                        //Xcode became active again (Frontmost)
-                        if !self.isRelaunch {
-                            if let inactiveDate = self.inactiveDate {
-                                let newDate: Date? = self.startDate?.addingTimeInterval(-inactiveDate.timeIntervalSinceNow)
-//                                print(self.startDate, newDate)
-//                                print(self.startDate!.distance(to: newDate!))
-                                self.startDate = newDate
+            notifCenter.addObserver(
+                forName: NSWorkspace.didActivateApplicationNotification,
+                object: nil,
+                queue: nil,
+                using: { [unowned self] notif in
+                    if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
+                        if app.bundleIdentifier == xcodeBundleId {
+                            // Xcode became active again (Frontmost)
+                            if !isRelaunch {
+                                if let inactiveDate = inactiveDate {
+                                    let newDate: Date? = startDate?.addingTimeInterval(-inactiveDate.timeIntervalSinceNow)
+                                    startDate = newDate
+                                }
+                            } else {
+                                startDate = Date()
+                                inactiveDate = nil
+                                isRelaunch = false
                             }
-                        } else {
-                            self.startDate = Date()
-                            self.inactiveDate = nil
-                            self.isRelaunch = false
-                        }
-                        // User can now start or stop DiscordX have to check if rpc is connected
-                        if self.rpc != nil {
-                            self.updateStatus()
+                            // User can now start or stop DiscordX have to check if rpc is connected
+                            if rpc != nil {
+                                updateStatus()
+                            }
                         }
                     }
-                }
-            })
-            
-            self.notifCenter.addObserver(forName: NSWorkspace.didDeactivateApplicationNotification, object: nil, queue: nil, using: { notif in
-                if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
-                    if app.bundleIdentifier == xcodeBundleId {
-                        //Xcode is inactive (Not frontmost)
-                        self.inactiveDate = Date()
-                        if self.rpc != nil {
-                            self.updateStatus()
+                })
+
+            notifCenter.addObserver(
+                forName: NSWorkspace.didDeactivateApplicationNotification,
+                object: nil,
+                queue: nil,
+                using: { [unowned self] notif in
+                    if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
+                        if app.bundleIdentifier == xcodeBundleId {
+                            // Xcode is inactive (Not frontmost)
+                            inactiveDate = Date()
+                            if rpc != nil {
+                                updateStatus()
+                            }
                         }
                     }
-                }
-            })
+                })
         }
-        
+
         if !flauntMode {
-            self.notifCenter.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: nil, using: { notif in
-                if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
-                    if app.bundleIdentifier == xcodeBundleId {
-                        //Xcode is going to become inactive (Sleep)
-                        self.inactiveDate = Date()
-                        if self.rpc != nil {
-                            self.updateStatus()
+            notifCenter.addObserver(
+                forName: NSWorkspace.willSleepNotification,
+                object: nil,
+                queue: nil,
+                using: { [unowned self] notif in
+                    if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
+                        if app.bundleIdentifier == xcodeBundleId {
+                            // Xcode is going to become inactive (Sleep)
+                            inactiveDate = Date()
+                            if rpc != nil {
+                                updateStatus()
+                            }
                         }
                     }
-                }
-            })
-            
-            self.notifCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: nil, using: { notif in
-                if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
-                    if app.bundleIdentifier == xcodeBundleId {
-                        //Xcode woke up from sleep
-                        if let inactiveDate = self.inactiveDate {
-                            let newDate: Date? = self.startDate?.addingTimeInterval(-inactiveDate.timeIntervalSinceNow)
-//                            print(self.startDate, newDate)
-                            self.startDate = newDate
-                        }
-                        if self.rpc != nil {
-                            self.updateStatus()
+                })
+
+            notifCenter.addObserver(
+                forName: NSWorkspace.didWakeNotification,
+                object: nil,
+                queue: nil,
+                using: { [unowned self] notif in
+                    if let app = notif.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
+                        if app.bundleIdentifier == xcodeBundleId {
+                            // Xcode woke up from sleep
+                            if let inactiveDate = inactiveDate {
+                                let newDate: Date? = startDate?.addingTimeInterval(-inactiveDate.timeIntervalSinceNow)
+                                startDate = newDate
+                            }
+                            if rpc != nil {
+                                updateStatus()
+                            }
                         }
                     }
-                }
-            })
+                })
         }
     }()
-    
+
     func launchApplication() {
-//        print("app launched")
-        
+
         for app in NSWorkspace.shared.runningApplications {
             // check if xcode is running
             if app.bundleIdentifier == xcodeBundleId {
-//                print("xcode running, connecting...")
                 initRPC()
             }
         }
-        
+
         _ = addAllObservers
-        
+
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
-        // Insert code here to tear down your application
-//        print("app closing")
         deinitRPC()
         clearTimer()
     }
@@ -336,17 +350,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 extension AppDelegate: SwordRPCDelegate {
     func swordRPCDidConnect(_ rpc: SwordRPC) {
-//        print("connected")
         startDate = Date()
         beginTimer()
     }
 
     func swordRPCDidDisconnect(_ rpc: SwordRPC, code: Int?, message msg: String?) {
-//        print("disconnected")
         clearTimer()
     }
 
     func swordRPCDidReceiveError(_ rpc: SwordRPC, code: Int, message msg: String) {
-    
+
     }
 }

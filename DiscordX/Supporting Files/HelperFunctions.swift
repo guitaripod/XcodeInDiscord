@@ -21,6 +21,6 @@ func withoutFileExt(_ file: String) -> String {
     }
 
     var ret = file
-    while (ret.popLast() != ".") {}
+    while ret.popLast() != "." {}
     return ret
 }
