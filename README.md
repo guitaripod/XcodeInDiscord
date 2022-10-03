@@ -71,6 +71,7 @@ DiscordX uses [PKBeam's Fork](https://github.com/PKBeam/SwordRPC) of [Azoy's Swo
 ## System Requirements
 - macOS Big Sur (11) (Minimum)
 - Xcode installed
+- Discord installed locally and launched
 
 ## Usage
 1. Download the project, and open it on Xcode.
@@ -121,8 +122,3 @@ end tell
 
 You can verify what permissions DiscordX uses by opening System Preferences and looking in Security & Privacy under Privacy, then Automation.
 That's it, you're done - DiscordX will now automatically monitor Xcode.
-
-If you like, you can set DiscordX to automatically open on login.
-
-# Note
-DiscordX is a fork of [RPFX](https://github.com/PKBeam/RPFX). I didn't contribute to the original as I didn't like the name RPFX.
