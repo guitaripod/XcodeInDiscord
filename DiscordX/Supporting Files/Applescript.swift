@@ -60,7 +60,6 @@ func getActiveFilename() -> String? {
     """
     let result = NSAppleScript(source: activeApplicationVersion)?.executeAndReturnError(nil)
     let version = result?.stringValue?.split(separator: ".")
-    //    print(version?[0], version?[1])
 
     guard let fileNames = runAPScript(.documentNames) else {
         return nil
@@ -82,7 +81,6 @@ func getActiveFilename() -> String? {
         }
         windowNames = correctedNames
     }
-    //    print("\n\tFile Names: \(fileNames)\n\tWindow Names: \(windowNames)\n")
 
     // find the first window title that matches a filename
     // (the first window name is the one in focus)
@@ -112,7 +110,7 @@ func getActiveWindow() -> String? {
         end tell
     """
 
-    //    get the name of every process whose visible is true
+    // Get the name of every process whose visible is true
 
     let script = NSAppleScript.init(source: activeApplication)
     let result = script?.executeAndReturnError(nil)
@@ -123,8 +121,8 @@ func getActiveWindow() -> String? {
             guard let strVal = desc.atIndex(i)!.stringValue else { return "Xcode" }
             arr.append(strVal)
         }
-        //        print(arr[0])
-        return arr[0]
+        return arr.first
     }
-    return ""
+
+    return nil
 }

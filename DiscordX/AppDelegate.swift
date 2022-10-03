@@ -56,7 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func updateStatus() {
-        var p = RichPresence()
+        var presence = RichPresence()
 
         let applicationName = getActiveWindow()
         let fileName = getActiveFilename()
@@ -64,48 +64,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // determine file type
         if fileName != nil && applicationName == "Xcode" {
-            p.details = "Editing \(fileName!)"
+            presence.details = "Editing \(fileName!)"
             if let fileExt = getFileExt(fileName!), discordRPImageKeys.contains(fileExt) {
-                p.assets.largeImage = fileExt
-                p.assets.smallImage = discordRPImageKeyXcode
+                presence.assets.largeImage = fileExt
+                presence.assets.smallImage = discordRPImageKeyXcode
             } else {
-                p.assets.largeImage = discordRPImageKeyDefault
+                presence.assets.largeImage = discordRPImageKeyDefault
             }
         } else {
             if let appName = applicationName, xcodeWindowNames.contains(appName) {
-                p.details = "Using \(appName)"
-                p.assets.largeImage = appName.replacingOccurrences(
+                presence.details = "Using \(appName)"
+                presence.assets.largeImage = appName.replacingOccurrences(
                     of: "\\s",
                     with: "",
                     options: .regularExpression
                 ).lowercased()
-                p.assets.smallImage = discordRPImageKeyXcode
+                presence.assets.smallImage = discordRPImageKeyXcode
             }
         }
 
-        // determine workspace type
-        if workspace != nil {
-            if applicationName == "Xcode"{
-                if workspace != "Untitled" {
-                    p.state = "in \(withoutFileExt(workspace!))"
-                    lastWindow = workspace!
-                }
-            } else {
-                p.assets.smallImage = discordRPImageKeyXcode
-                p.assets.largeImage = discordRPImageKeyDefault
-                p.state = "Working on \(withoutFileExt((lastWindow ?? workspace) ?? "?" ))"
-            }
-        }
+        presence.assets.smallImage = discordRPImageKeyXcode
+        presence.assets.largeImage = discordRPImageKeyDefault
+        presence.state = "Working on \(withoutFileExt((lastWindow ?? workspace) ?? "?" ))"
 
         // Xcode was just launched?
         if fileName == nil && workspace == nil {
-            p.assets.largeImage = discordRPImageKeyXcode
-            p.details = "No file open"
+            presence.assets.largeImage = discordRPImageKeyXcode
+            presence.details = "No file open"
         }
 
-        p.timestamps.start = startDate!
-        p.timestamps.end = nil
-        rpc!.setPresence(p)
+        presence.timestamps.start = startDate!
+        presence.timestamps.end = nil
+        rpc!.setPresence(presence)
     }
 
     func initRPC() {
@@ -127,9 +117,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         init(_ appDelegate: AppDelegate) {
             self.appDelegate = appDelegate
-            if strictMode {
+            if isStrictModeEnabled {
                 refreshConfigurable = .strict
-            } else if flauntMode {
+            } else if isFlauntModeEnabled {
                 refreshConfigurable = .flaunt
             } else {
                 fatalError("Unspecified refresh type")
@@ -138,54 +128,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         var body: some View {
             VStack {
-                VStack {
-                    Spacer()
-                    Button("Start DiscordX") {
-                        if appDelegate.rpc == nil {
-                            appDelegate.isRelaunch = true
-                            appDelegate.launchApplication()
-                        } else {
-                            print("DiscordX is already running")
-                        }
-                    }
-                    Spacer()
-                    Button("Stop DiscordX") {
-                        if let rpc = appDelegate.rpc {
-                            rpc.setPresence(RichPresence())
-                            rpc.disconnect()
-                            appDelegate.rpc = nil
-                            appDelegate.clearTimer()
-                        } else {
-                            print("DiscordX is not running")
-                        }
-                    }
 
-                    Spacer()
-                    Picker(selection: $refreshConfigurable, label: Text("Select Mode :")) {
-                        Text("Strict").tag(RefreshConfigurable.strict)
-                            .help(RefreshConfigurable.strict.message)
-                        Text("Flaunt").tag(RefreshConfigurable.flaunt)
-                            .help(RefreshConfigurable.flaunt.message)
+                Button("Start DiscordX") {
+                    if appDelegate.rpc == nil {
+                        appDelegate.isRelaunch = true
+                        appDelegate.launchApplication()
+                    } else {
+                        print("DiscordX is already running")
                     }
-                    .pickerStyle(RadioGroupPickerStyle())
-
-                    Spacer()
-                    Button("Quit DiscordX") {
-                        exit(-1)
-                    }
-                    .padding(.top)
-                    .foregroundColor(.red)
-                    Spacer()
                 }
+
+                Button("Stop DiscordX") {
+                    if let rpc = appDelegate.rpc {
+                        rpc.setPresence(RichPresence())
+                        rpc.disconnect()
+                        appDelegate.rpc = nil
+                        appDelegate.clearTimer()
+                    } else {
+                        print("DiscordX is not running")
+                    }
+                }
+
+                Picker("Mode:", selection: $refreshConfigurable) {
+                    Text("Strict")
+                        .help(RefreshConfigurable.strict.message)
+                        .tag(RefreshConfigurable.strict)
+                    Text("Flaunt")
+                        .help(RefreshConfigurable.flaunt.message)
+                        .tag(RefreshConfigurable.flaunt)
+                }
+                .pickerStyle(.radioGroup)
+
+                Button("Quit DiscordX") {
+                    exit(-1)
+                }
+                .foregroundColor(.red)
             }
             .onChange(of: refreshConfigurable) { newValue in
                 switch newValue {
                 case .strict:
-                    strictMode = true
-                    flauntMode = false
+                    isStrictModeEnabled = true
+                    isFlauntModeEnabled = false
                 case .flaunt:
-                    strictMode = false
-                    flauntMode = true
+                    isStrictModeEnabled = false
+                    isFlauntModeEnabled = true
                 }
             }
         }
@@ -196,7 +182,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let contentView = ContentView(self)
         let view = NSHostingView(rootView: contentView)
-        print(strictMode, flauntMode)
+        print(isStrictModeEnabled, isFlauntModeEnabled)
 
         view.frame = NSRect(x: 0, y: 0, width: 200, height: 160)
 
@@ -217,7 +203,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let window = NSApplication.shared.windows.first {
             window.close()
         }
-
     }
 
     private lazy var addAllObservers: () = {
@@ -232,7 +217,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         initRPC()
                     }
                 }
-            })
+            }
+        )
 
         // run on Xcode close
         notifCenter.addObserver(
@@ -245,9 +231,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         deinitRPC()
                     }
                 }
-            })
+            }
+        )
 
-        if strictMode {
+        if isStrictModeEnabled {
             notifCenter.addObserver(
                 forName: NSWorkspace.didActivateApplicationNotification,
                 object: nil,
@@ -272,7 +259,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                             }
                         }
                     }
-                })
+                }
+            )
 
             notifCenter.addObserver(
                 forName: NSWorkspace.didDeactivateApplicationNotification,
@@ -288,10 +276,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                             }
                         }
                     }
-                })
+                }
+            )
         }
 
-        if !flauntMode {
+        if !isFlauntModeEnabled {
             notifCenter.addObserver(
                 forName: NSWorkspace.willSleepNotification,
                 object: nil,
@@ -306,7 +295,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                             }
                         }
                     }
-                })
+                }
+            )
 
             notifCenter.addObserver(
                 forName: NSWorkspace.didWakeNotification,
@@ -325,7 +315,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                             }
                         }
                     }
-                })
+                }
+            )
         }
     }()
 

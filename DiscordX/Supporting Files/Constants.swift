@@ -11,23 +11,23 @@ import Foundation
 // used to register for notifs when Xcode opens/closes
 let xcodeBundleId = "com.apple.dt.Xcode"
 
-// how often we check Xcode for a status update
-let refreshInterval = 5 // seconds
+// How often we check Xcode for a status update, in seconds.
+let refreshInterval = 5
 
 // if you switch out of Xcode the timer stops
 /// true: timer will stop
 /// false: timer will not stop
-var strictMode: Bool {
-    get { UserDefaults.standard.bool(forKey: "strictMode") }
-    set { UserDefaults.standard.set(newValue, forKey: "strictMode") }
+var isStrictModeEnabled: Bool {
+    get { UserDefaults.standard.bool(forKey: "isStrictModeEnabled") }
+    set { UserDefaults.standard.set(newValue, forKey: "isStrictModeEnabled") }
 }
 
 // it will never stop the timer regardless of anything except if you kill DiscordX
 /// true: timer will not stop
 /// false: timer will stop
-var flauntMode: Bool {
-    get { UserDefaults.standard.bool(forKey: "flauntMode") }
-    set { UserDefaults.standard.set(newValue, forKey: "flauntMode") }
+var isFlauntModeEnabled: Bool {
+    get { UserDefaults.standard.bool(forKey: "isFlauntModeEnabled") }
+    set { UserDefaults.standard.set(newValue, forKey: "isFlauntModeEnabled") }
 }
 
 // some other window names of Xcode
@@ -81,4 +81,4 @@ let discordRPImageKeys = [
 let discordRPImageKeyDefault = "xcode"
 
 // Xcode application icon
-let discordRPImageKeyXcode = "xcode"
+let discordRPImageKeyXcode = "swift"

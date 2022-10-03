@@ -13,7 +13,7 @@ struct DiscordX: App {
     let persistenceController = PersistenceController.shared
 
     init() {
-        UserDefaults.standard.register(defaults: ["strictMode": true, "flauntMode": false])
+        UserDefaults.standard.register(defaults: ["isStrictModeEnabled": true, "isFlauntModeEnabled": false])
     }
 
     var body: some Scene {
