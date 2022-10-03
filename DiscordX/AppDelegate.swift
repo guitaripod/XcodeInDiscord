@@ -73,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         } else {
             if let appName = applicationName, xcodeWindowNames.contains(appName) {
-                presence.details = "Using \(appName)"
+                presence.details = "Debugging in \(appName)"
                 presence.assets.largeImage = appName.replacingOccurrences(
                     of: "\\s",
                     with: "",
