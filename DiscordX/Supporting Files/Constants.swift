@@ -76,9 +76,3 @@ let discordRPImageKeys = [
     "arobject",
     "entitlements"
 ]
-
-// default for unsupported file types
-let discordRPImageKeyDefault = "xcode"
-
-// Xcode application icon
-let discordRPImageKeyXcode = "swift"
