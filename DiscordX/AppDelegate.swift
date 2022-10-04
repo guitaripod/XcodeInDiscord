@@ -58,8 +58,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let fileName = getActiveFilename()
         let workspace = getActiveWorkspace()
 
-        presence.assets.smallImage = "swift"
-        presence.assets.largeImage = "xcode"
+        presence.assets.smallImage = "xcode"
+        presence.assets.largeImage = "swift"
         presence.state = "Working on \(withoutFileExt((lastWindow ?? workspace) ?? "?" ))"
 
         if let appName = applicationName, xcodeWindowNames.contains(appName) {
