@@ -10,6 +10,10 @@ import Cocoa
 import SwordRPC
 import SwiftUI
 
+final class AppViewModel: ObservableObject {
+    @Published var showPopover = false
+}
+
 enum RefreshConfigurable: Int {
     case strict = 0
     case flaunt
@@ -58,15 +62,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let fileName = getActiveFilename()
         let workspace = getActiveWorkspace()
 
-        presence.assets.smallImage = "xcode"
-        presence.assets.largeImage = "swift"
-        presence.state = "Working on \(withoutFileExt((lastWindow ?? workspace) ?? "?" ))"
-
-        if let appName = applicationName, xcodeWindowNames.contains(appName) {
-            presence.details = "Debugging in \(appName)"
+        // determine file type
+        if fileName != nil && applicationName == "Xcode" {
+            presence.details = "Editing \(fileName!)"
+            if let fileExt = getFileExt(fileName!), discordRPImageKeys.contains(fileExt) {
+                presence.assets.largeImage = fileExt
+                presence.assets.smallImage = discordRPImageKeyXcode
+            } else {
+                presence.assets.largeImage = discordRPImageKeyDefault
+            }
+        } else {
+            if let appName = applicationName, xcodeWindowNames.contains(appName) {
+                presence.details = "Debugging in \(appName)"
+                presence.assets.largeImage = appName.replacingOccurrences(
+                    of: "\\s",
+                    with: "",
+                    options: .regularExpression
+                ).lowercased()
+                presence.assets.smallImage = discordRPImageKeyXcode
+            }
         }
 
+        presence.assets.smallImage = discordRPImageKeyXcode
+        presence.assets.largeImage = discordRPImageKeyDefault
+        presence.state = "Working on \(withoutFileExt((lastWindow ?? workspace) ?? "?" ))"
+
+        // Xcode was just launched?
         if fileName == nil && workspace == nil {
+            presence.assets.largeImage = discordRPImageKeyXcode
             presence.details = "No file open"
         }
 
