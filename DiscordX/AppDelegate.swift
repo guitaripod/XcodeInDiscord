@@ -85,7 +85,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         presence.assets.smallImage = discordRPImageKeyXcode
         presence.assets.largeImage = discordRPImageKeyDefault
-        presence.state = "Working on \(withoutFileExt((lastWindow ?? workspace) ?? "?" ))"
+        let title = "\(withoutFileExt((lastWindow ?? workspace) ?? "?" ))"
+            .replacingOccurrences(of: "JouZen", with: "Ōura")
+        presence.state = "Working on \(title)"
 
         // Xcode was just launched?
         if fileName == nil && workspace == nil {
